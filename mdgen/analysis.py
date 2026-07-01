@@ -1,7 +1,15 @@
 import json
 import os
 
+import mdtraj
 import numpy as np
+
+if not hasattr(mdtraj, 'version'):
+    class _MDTrajVersion:
+        version = mdtraj.__version__
+
+    mdtraj.version = _MDTrajVersion()
+
 import pyemma
 from tqdm import tqdm
 
