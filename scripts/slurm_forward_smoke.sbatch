@@ -8,18 +8,22 @@
 #SBATCH --output=logs/forward_smoke_%j.out
 #SBATCH --error=logs/forward_smoke_%j.err
 
-set -euo pipefail
+set -euxo pipefail
 
 cd /home/yh1924/projects/mdgen
+ENV_PREFIX=/home/yh1924/projects/mdgen/envs/mdgen-py310
+MAMBA=/home/yh1924/.local/bin/micromamba
 
-/home/yh1924/.local/bin/micromamba run -p envs/mdgen-py310 python - <<'PY'
+echo "start $(date -Is) host=$(hostname)"
+
+$MAMBA run -p "$ENV_PREFIX" python - <<'PY'
 import torch
 print("torch", torch.__version__, "cuda", torch.version.cuda, "available", torch.cuda.is_available())
 if torch.cuda.is_available():
     print("device", torch.cuda.get_device_name(0))
 PY
 
-/home/yh1924/.local/bin/micromamba run -p envs/mdgen-py310 python sim_inference.py \
+$MAMBA run -p "$ENV_PREFIX" python sim_inference.py \
   --sim_ckpt checkpoints/forward_sim.ckpt \
   --data_dir data/4AA_data \
   --split splits/smoke_FLRH.csv \
@@ -29,3 +33,5 @@ PY
   --suffix _i100 \
   --xtc \
   --out_dir outputs/forward_smoke
+
+echo "done $(date -Is)"
