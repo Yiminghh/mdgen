@@ -16,6 +16,7 @@ RSYNC_EXCLUDES = \
 	--exclude='checkpoints/' \
 	--exclude='wandb/' \
 	--exclude='logs/' \
+	--exclude='workdir/' \
 	--exclude='tmp/'
 
 .PHONY: print-sync-config sync-up _assert-remote-dir
