@@ -15,7 +15,7 @@ args = parser.parse_args()
 import os, torch, mdtraj, tqdm
 import numpy as np
 from mdgen.geometry import atom14_to_frames, atom14_to_atom37, atom37_to_torsions
-from mdgen.residue_constants import restype_order
+from mdgen.residue_constants import restype_order, restype_atom37_mask
 from mdgen.tensor_utils import tensor_tree_map
 from mdgen.wrapper import NewMDGenWrapper
 from mdgen.utils import atom14_to_pdb
@@ -25,6 +25,17 @@ import pandas as pd
 
 
 os.makedirs(args.out_dir, exist_ok=True)
+
+def save_atom14_xtc(atom14, seqres, pdb_path, xtc_path):
+    atom14_to_pdb(atom14[:1], seqres, pdb_path)
+    top = mdtraj.load(pdb_path).topology
+    atom37 = atom14_to_atom37(atom14, seqres[None])
+    atom_mask = restype_atom37_mask[seqres].astype(bool)
+    xyz = atom37[:, atom_mask].astype(np.float32, copy=False) / 10.0
+    traj = mdtraj.Trajectory(xyz=xyz, topology=top)
+    traj.superpose(traj)
+    traj.save(xtc_path)
+    traj[0].save_pdb(pdb_path)
 
 
 
@@ -93,12 +104,8 @@ def do(model, name, seqres):
     all_atom14 = torch.cat(all_atom14)
     
     path = os.path.join(args.out_dir, f'{name}.pdb')
-    atom14_to_pdb(all_atom14.cpu().numpy(), batch['seqres'][0].cpu().numpy(), path)
-    
-    traj = mdtraj.load(path)
-    traj.superpose(traj)
-    traj.save(os.path.join(args.out_dir, f'{name}.xtc'))
-    traj[0].save(os.path.join(args.out_dir, f'{name}.pdb'))
+    xtc_path = os.path.join(args.out_dir, f'{name}.xtc')
+    save_atom14_xtc(all_atom14.cpu().numpy(), batch['seqres'][0].cpu().numpy(), path, xtc_path)
 
 @torch.no_grad()
 def main():
