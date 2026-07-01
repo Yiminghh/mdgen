@@ -3,6 +3,8 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--pdbdir", required=True)
 parser.add_argument("--mddir", default='share/4AA_sims_implicit')
 parser.add_argument('--pdb_id', nargs='*', default=[])
+parser.add_argument('--chunk_idx', type=int, default=0)
+parser.add_argument('--n_chunks', type=int, default=1)
 args = parser.parse_args()
 
 import mdgen.analysis
@@ -70,6 +72,10 @@ if args.pdb_id:
 else:
     pdb_id = [nam.split('.')[0] for nam in os.listdir(args.pdbdir) if '.pdb' in nam]
 
+pdb_id = list(np.array_split(np.array(pdb_id), args.n_chunks)[args.chunk_idx])
+print('#' * 20)
+print(f'RUN NUMBER: {args.chunk_idx}, PROCESSING {len(pdb_id)} TRAJECTORIES')
+print('#' * 20)
 
 for name in tqdm.tqdm(pdb_id): 
     if os.path.exists(f"{args.pdbdir}/{name}.pdf"): continue

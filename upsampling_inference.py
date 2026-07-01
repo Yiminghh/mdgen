@@ -8,6 +8,8 @@ parser.add_argument('--batch_size', type=int, default=1)
 parser.add_argument('--cond_interval', type=int, default=None)
 parser.add_argument('--out_dir', type=str, default=".")
 parser.add_argument('--split', type=str, default='splits/4AA_implicit_test.csv')
+parser.add_argument('--chunk_idx', type=int, default=0)
+parser.add_argument('--n_chunks', type=int, default=1)
 args = parser.parse_args()
 
 import os, torch, mdtraj, tqdm
@@ -71,6 +73,9 @@ def split_batch(item, num_frames=1000, cond_interval=100):
     return batches
     
 def do(model, name, seqres):
+    if os.path.exists(os.path.join(args.out_dir, f'{name}.xtc')):
+        print(f'skipping {name}: output exists')
+        return
 
     item = get_batch(name, seqres, num_frames = model.args.num_frames)
     cond_interval = args.cond_interval or getattr(model.args, 'cond_interval', None) or 100
@@ -102,7 +107,13 @@ def main():
     
     
     df = pd.read_csv(args.split, index_col='name')
-    for name in df.index:
+    names = np.array(df.index)
+    chunks = np.array_split(names, args.n_chunks)
+    chunk = chunks[args.chunk_idx]
+    print('#' * 20)
+    print(f'RUN NUMBER: {args.chunk_idx}, PROCESSING IDXS {args.chunk_idx * len(chunk)}-{(args.chunk_idx + 1) * len(chunk)}')
+    print('#' * 20)
+    for name in chunk:
         if args.pdb_id and name not in args.pdb_id:
             continue
         do(model, name, df.seqres[name])
