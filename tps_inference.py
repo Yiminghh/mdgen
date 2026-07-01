@@ -117,7 +117,7 @@ def do(model, name, seqres):
         print('No start or end state found for ', name, 'skipping...')
         return
 
-    arr = np.lib.format.open_memmap(f'{args.data_dir}/{name}.npy', 'r')
+    arr = np.lib.format.open_memmap(f'{args.data_dir}/{name}{args.suffix}.npy', 'r')
 
     metadata = []
     for i in tqdm.tqdm(range(args.num_batches), desc='num batch'):
