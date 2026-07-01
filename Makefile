@@ -17,7 +17,8 @@ RSYNC_EXCLUDES = \
 	--exclude='wandb/' \
 	--exclude='logs/' \
 	--exclude='workdir/' \
-	--exclude='tmp/'
+	--exclude='tmp/' \
+	--exclude='tmp*/'
 
 .PHONY: print-sync-config sync-up _assert-remote-dir
 
