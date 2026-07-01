@@ -126,7 +126,7 @@ def do(model, name, seqres):
 
 @torch.no_grad()
 def main():
-    model = NewMDGenWrapper.load_from_checkpoint(args.sim_ckpt)
+    model = NewMDGenWrapper.load_from_checkpoint(args.sim_ckpt, weights_only=False)
     model.eval().to('cuda')
     
     
