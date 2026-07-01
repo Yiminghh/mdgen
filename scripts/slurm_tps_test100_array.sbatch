@@ -39,6 +39,7 @@ $PYTHON tps_inference.py \
   --num_batches "${NUM_BATCHES}" \
   --batch_size "${BATCH_SIZE}" \
   --suffix _i100 \
+  --data_stride 100 \
   --mddir data/4AA_sims \
   --out_dir "${OUT_DIR}" \
   --chunk_idx "${CHUNK_IDX}" \

@@ -2,12 +2,14 @@ import argparse
 import copy
 import json
 import pickle
+import re
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--sim_ckpt', type=str, default=None, required=True)
 parser.add_argument('--data_dir', type=str, default='share/4AA_data')
 parser.add_argument('--mddir', type=str, default='/data/cb/scratch/share/mdgen/4AA_sims')
 parser.add_argument('--suffix', type=str, default='')
+parser.add_argument('--data_stride', type=int, default=0)
 parser.add_argument('--pdb_id', nargs='*', default=[])
 parser.add_argument('--num_frames', type=int, default=1000)
 parser.add_argument('--num_batches', type=int, default=100)
@@ -40,9 +42,19 @@ def temp_seed(seed):
 
 os.makedirs(args.out_dir, exist_ok=True)
 
-def get_sample(arr, seqres, start_idxs, end_idxs, start_state, end_state, num_frames=1000):
-    start_idx = np.random.choice(start_idxs, 1).item()
-    end_idx = np.random.choice(end_idxs, 1).item()
+def infer_data_stride():
+    if args.data_stride > 0:
+        return args.data_stride
+    match = re.fullmatch(r'_i(\d+)', args.suffix)
+    if match:
+        return int(match.group(1))
+    return 1
+
+def get_sample(arr, seqres, start_idxs, end_idxs, start_state, end_state, data_stride, num_frames=1000):
+    start_full_idx = np.random.choice(start_idxs, 1).item()
+    end_full_idx = np.random.choice(end_idxs, 1).item()
+    start_idx = start_full_idx // data_stride
+    end_idx = end_full_idx // data_stride
 
     start_arr = np.copy(arr[start_idx:start_idx + 1]).astype(np.float32)
     end_arr = np.copy(arr[end_idx:end_idx + 1]).astype(np.float32)
@@ -72,8 +84,10 @@ def get_sample(arr, seqres, start_idxs, end_idxs, start_state, end_state, num_fr
         'trans': traj_trans,
         'rots': traj_rots,
         'seqres': seqres,
-        'start_idx': start_idx,
-        'end_idx': end_idx,
+        'start_idx': start_full_idx,
+        'end_idx': end_full_idx,
+        'start_arr_idx': start_idx,
+        'end_arr_idx': end_idx,
         'start_state': start_state,
         'end_state': end_state,
         'mask': mask,  # (L,)
@@ -110,21 +124,26 @@ def do(model, name, seqres):
     flux_mat = cmsm.transition_matrix * cmsm.pi[None, :]
     flux_mat[flux_mat < 0.0000001] = np.inf  # set 0 flux to inf so we do not choose that as the argmin
     start_state, end_state = np.unravel_index(np.argmin(flux_mat, axis=None), flux_mat.shape)
+    arr = np.lib.format.open_memmap(f'{args.data_dir}/{name}{args.suffix}.npy', 'r')
+    data_stride = infer_data_stride()
+    max_full_idx = (len(arr) - 1) * data_stride
+
     ref_discrete = msm.metastable_assignments[ref_kmeans]
     start_idxs = np.where(ref_discrete == start_state)[0]
     end_idxs = np.where(ref_discrete == end_state)[0]
-    if (ref_discrete == start_state).sum() == 0 or (ref_discrete == end_state).sum() == 0:
+    start_idxs = start_idxs[(start_idxs <= max_full_idx) & (start_idxs % data_stride == 0)]
+    end_idxs = end_idxs[(end_idxs <= max_full_idx) & (end_idxs % data_stride == 0)]
+    if len(start_idxs) == 0 or len(end_idxs) == 0:
         print('No start or end state found for ', name, 'skipping...')
         return
-
-    arr = np.lib.format.open_memmap(f'{args.data_dir}/{name}{args.suffix}.npy', 'r')
 
     metadata = []
     for i in tqdm.tqdm(range(args.num_batches), desc='num batch'):
         batch_list = []
         for _ in range(args.batch_size):
             batch_list.append(
-                get_sample(arr, seqres, copy.deepcopy(start_idxs), end_idxs, start_state, end_state, num_frames=args.num_frames))
+                get_sample(arr, seqres, copy.deepcopy(start_idxs), end_idxs, start_state, end_state, data_stride,
+                           num_frames=args.num_frames))
         batch = next(iter(torch.utils.data.DataLoader(batch_list, batch_size=args.batch_size)))
         batch = tensor_tree_map(lambda x: x.cuda(), batch)
         print('Start tps for ', name, 'with start coords', batch['trans'][0, 0, 0])
@@ -143,6 +162,8 @@ def do(model, name, seqres):
                 'name': name,
                 'start_idx': batch['start_idx'][j].cpu().item(),
                 'end_idx': batch['end_idx'][j].cpu().item(),
+                'start_arr_idx': batch['start_arr_idx'][j].cpu().item(),
+                'end_arr_idx': batch['end_arr_idx'][j].cpu().item(),
                 'start_state': batch['start_state'][j].cpu().item(),
                 'end_state': batch['end_state'][j].cpu().item(),
                 'path': path,

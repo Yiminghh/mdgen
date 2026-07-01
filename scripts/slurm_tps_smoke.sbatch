@@ -36,6 +36,7 @@ $PYTHON tps_inference.py \
   --num_batches 1 \
   --batch_size 2 \
   --suffix _i100 \
+  --data_stride 100 \
   --mddir data/4AA_sims \
   --out_dir "${OUT_DIR}"
 
