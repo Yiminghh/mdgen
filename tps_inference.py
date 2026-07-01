@@ -61,11 +61,11 @@ def get_sample(arr, seqres, start_idxs, end_idxs, start_state, end_state, data_s
     seqres = torch.tensor([restype_order[c] for c in seqres])
 
     start_frames = atom14_to_frames(torch.from_numpy(start_arr))
-    start_atom37 = torch.from_numpy(atom14_to_atom37(start_arr, seqres)).float()
+    start_atom37 = torch.from_numpy(atom14_to_atom37(start_arr, seqres[None])).float()
     start_torsions, start_torsion_mask = atom37_to_torsions(start_atom37, seqres[None])
     
     end_frames = atom14_to_frames(torch.from_numpy(end_arr))
-    end_atom37 = torch.from_numpy(atom14_to_atom37(end_arr, seqres)).float()
+    end_atom37 = torch.from_numpy(atom14_to_atom37(end_arr, seqres[None])).float()
     end_torsions, end_torsion_mask = atom37_to_torsions(end_atom37, seqres[None])
     L = start_frames.shape[1]
     traj_torsions = start_torsions.expand(num_frames, -1, -1, -1).clone()

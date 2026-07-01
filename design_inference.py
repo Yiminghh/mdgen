@@ -52,7 +52,7 @@ def get_sample(arr, seqres, start_idxs, start_state, end_state, num_frames=100):
     seqres = torch.tensor([restype_order[c] for c in seqres])
 
     frames = atom14_to_frames(torch.from_numpy(arr))
-    atom37 = torch.from_numpy(atom14_to_atom37(arr, seqres)).float()
+    atom37 = torch.from_numpy(atom14_to_atom37(arr, seqres[None])).float()
     torsions, torsion_mask = atom37_to_torsions(atom37, seqres[None])
 
     L = frames.shape[1]
