@@ -16,6 +16,7 @@
 from functools import partial
 from typing import List
 
+import numpy as np
 import torch
 import torch.nn as nn
 
@@ -77,10 +78,15 @@ def one_hot(x, v_bins):
 
 
 def batched_gather(data, inds, dim=0, no_batch_dims=0):
+    if isinstance(data, np.ndarray) and isinstance(inds, torch.Tensor):
+        inds = inds.cpu().numpy()
+    elif isinstance(data, torch.Tensor) and isinstance(inds, np.ndarray):
+        inds = torch.as_tensor(inds, device=data.device)
+
     ranges = []
     for i, s in enumerate(data.shape[:no_batch_dims]):
-        r = torch.arange(s)
-        r = r.view(*(*((1,) * i), -1, *((1,) * (len(inds.shape) - i - 1))))
+        r = np.arange(s) if isinstance(data, np.ndarray) else torch.arange(s, device=data.device)
+        r = r.reshape(*(*((1,) * i), -1, *((1,) * (len(inds.shape) - i - 1))))
         ranges.append(r)
 
     remaining_dims = [
@@ -88,7 +94,7 @@ def batched_gather(data, inds, dim=0, no_batch_dims=0):
     ]
     remaining_dims[dim - no_batch_dims if dim >= 0 else dim] = inds
     ranges.extend(remaining_dims)
-    return data[ranges]
+    return data[tuple(ranges)]
 
 
 # With tree_map, a poor man's JAX tree_map
