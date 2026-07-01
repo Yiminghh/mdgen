@@ -27,6 +27,7 @@ from mdgen.tensor_utils import tensor_tree_map
 from mdgen.residue_constants import restype_order, restype_atom37_mask
 from mdgen.wrapper import NewMDGenWrapper
 from mdgen.dataset import atom14_to_frames
+from mdgen.utils import atom14_to_pdb
 import pandas as pd
 import contextlib
 import numpy as np
