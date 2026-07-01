@@ -129,7 +129,7 @@ def do(model, name, seqres):
     data_stride = infer_data_stride()
     max_full_idx = (len(arr) - 1) * data_stride
 
-    ref_discrete = msm.metastable_assignments[ref_kmeans]
+    ref_discrete = mdgen.analysis.get_metastable_assignments(msm, ref_kmeans)[ref_kmeans]
     start_idxs = np.where(ref_discrete == start_state)[0]
     end_idxs = np.where(ref_discrete == end_state)[0]
     start_idxs = start_idxs[(start_idxs <= max_full_idx) & (start_idxs % data_stride == 0)]

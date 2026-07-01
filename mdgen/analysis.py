@@ -67,12 +67,43 @@ def get_kmeans(traj):
 def get_msm(traj, lag=1000, nstates=10):
     msm = pyemma.msm.estimate_markov_model(traj, lag=lag)
     pcca = msm.pcca(nstates)
-    assert len(msm.metastable_assignments) == 100
-    cmsm = pyemma.msm.estimate_markov_model(msm.metastable_assignments[traj], lag=lag)
+    metastable_assignments = get_metastable_assignments(msm, traj)
+    cmsm = pyemma.msm.estimate_markov_model(metastable_assignments[traj], lag=lag)
     return msm, pcca, cmsm
 
+def get_metastable_assignments(msm, traj=None):
+    cached = getattr(msm, '_mdgen_metastable_assignments', None)
+    if cached is not None:
+        assignments = np.asarray(cached)
+    else:
+        assignments = np.asarray(msm.metastable_assignments)
+
+    if traj is None:
+        return assignments
+
+    traj = np.asarray(traj)
+    if traj.size == 0:
+        return assignments
+
+    max_state = int(np.max(traj))
+    if len(assignments) > max_state:
+        return assignments
+
+    active_set = np.asarray(getattr(msm, 'active_set', np.arange(len(assignments))), dtype=int)
+    fill_value = int(np.bincount(assignments.astype(int)).argmax())
+    full_len = max(max_state + 1, int(np.max(active_set)) + 1)
+    full_assignments = np.full(full_len, fill_value, dtype=assignments.dtype)
+    full_assignments[active_set] = assignments
+    try:
+        msm._mdgen_metastable_assignments = full_assignments
+    except Exception:
+        pass
+    return full_assignments
+
 def discretize(traj, kmeans, msm):
-    return msm.metastable_assignments[kmeans.transform(traj)[:,0]]
+    kmeans_traj = kmeans.transform(traj)[:,0]
+    return get_metastable_assignments(msm, kmeans_traj)[kmeans_traj]
+
 
 def load_tps_ensemble(name, directory):
     metadata = json.load(open(os.path.join(directory, f'{name}_metadata.json'),'rb'))

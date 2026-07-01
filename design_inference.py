@@ -102,7 +102,7 @@ def do(model, name, seqres):
     flux_mat = cmsm.transition_matrix * cmsm.pi[None, :]
     np.fill_diagonal(flux_mat, 0)
     start_state, end_state = np.unravel_index(np.argmax(flux_mat, axis=None), flux_mat.shape)
-    ref_discrete = msm.metastable_assignments[ref_kmeans]
+    ref_discrete = mdgen.analysis.get_metastable_assignments(msm, ref_kmeans)[ref_kmeans]
     
     arr = np.lib.format.open_memmap(f'{args.data_dir}/{name}.npy', 'r')
     if model.args.frame_interval:
