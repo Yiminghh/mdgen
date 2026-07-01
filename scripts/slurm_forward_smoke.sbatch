@@ -12,18 +12,18 @@ set -euxo pipefail
 
 cd /home/yh1924/projects/mdgen
 ENV_PREFIX=/home/yh1924/projects/mdgen/envs/mdgen-py310
-MAMBA=/home/yh1924/.local/bin/micromamba
+PYTHON=$ENV_PREFIX/bin/python
 
 echo "start $(date -Is) host=$(hostname)"
 
-$MAMBA run -p "$ENV_PREFIX" python - <<'PY'
+$PYTHON - <<'PY'
 import torch
 print("torch", torch.__version__, "cuda", torch.version.cuda, "available", torch.cuda.is_available())
 if torch.cuda.is_available():
     print("device", torch.cuda.get_device_name(0))
 PY
 
-$MAMBA run -p "$ENV_PREFIX" python sim_inference.py \
+$PYTHON sim_inference.py \
   --sim_ckpt checkpoints/forward_sim.ckpt \
   --data_dir data/4AA_data \
   --split splits/smoke_FLRH.csv \
