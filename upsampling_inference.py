@@ -5,6 +5,7 @@ parser.add_argument('--data_dir', type=str, default=None, required=True)
 parser.add_argument('--suffix', type=str, default='_i100')
 parser.add_argument('--pdb_id', nargs='*', default=[])
 parser.add_argument('--batch_size', type=int, default=1)
+parser.add_argument('--cond_interval', type=int, default=None)
 parser.add_argument('--out_dir', type=str, default=".")
 parser.add_argument('--split', type=str, default='splits/4AA_implicit_test.csv')
 args = parser.parse_args()
@@ -45,6 +46,10 @@ def get_batch(name, seqres, num_frames):
     }
 
 def split_batch(item, num_frames=1000, cond_interval=100):
+    if cond_interval <= 0:
+        raise ValueError(f'cond_interval must be positive, got {cond_interval}')
+    if num_frames % cond_interval != 0:
+        raise ValueError(f'num_frames ({num_frames}) must be divisible by cond_interval ({cond_interval})')
     total_frames = item['torsions'].shape[0] * cond_interval
     batches = []
     total_items = int(total_frames / num_frames)
@@ -68,8 +73,9 @@ def split_batch(item, num_frames=1000, cond_interval=100):
 def do(model, name, seqres):
 
     item = get_batch(name, seqres, num_frames = model.args.num_frames)
-    
-    items = split_batch(item, num_frames=model.args.num_frames, cond_interval=model.args.cond_interval)
+    cond_interval = args.cond_interval or getattr(model.args, 'cond_interval', None) or 100
+
+    items = split_batch(item, num_frames=model.args.num_frames, cond_interval=cond_interval)
     
     loader = torch.utils.data.DataLoader(items, shuffle=False, batch_size=args.batch_size)
 

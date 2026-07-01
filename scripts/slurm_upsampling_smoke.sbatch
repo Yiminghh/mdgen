@@ -51,6 +51,7 @@ $PYTHON upsampling_inference.py \
   --split splits/4AA_implicit_test.csv \
   --pdb_id "${SMOKE_NAME}" \
   --batch_size 2 \
+  --cond_interval 100 \
   --suffix _i100 \
   --out_dir "${OUT_DIR}"
 
