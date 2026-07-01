@@ -20,9 +20,15 @@ export MKL_NUM_THREADS=1
 PDB_DIR=${MDGEN_PDB_DIR:-outputs/forward_test100}
 SAVE_NAME=${MDGEN_SAVE_NAME:-out.pkl}
 NUM_WORKERS=${MDGEN_ANALYSIS_WORKERS:-4}
+PDB_IDS=${MDGEN_PDB_IDS:-}
+PDB_ID_ARGS=()
+if [[ -n "${PDB_IDS}" ]]; then
+  read -r -a PDB_ID_LIST <<< "${PDB_IDS}"
+  PDB_ID_ARGS=(--pdb_id "${PDB_ID_LIST[@]}")
+fi
 
 echo "start $(date -Is) host=$(hostname)"
-echo "pdb_dir=${PDB_DIR} save_name=${SAVE_NAME} num_workers=${NUM_WORKERS}"
+echo "pdb_dir=${PDB_DIR} save_name=${SAVE_NAME} num_workers=${NUM_WORKERS} pdb_ids=${PDB_IDS:-ALL}"
 
 $PYTHON -m scripts.analyze_peptide_sim \
   --mddir data/4AA_sims \
@@ -30,6 +36,7 @@ $PYTHON -m scripts.analyze_peptide_sim \
   --plot \
   --save \
   --save_name "${SAVE_NAME}" \
+  "${PDB_ID_ARGS[@]}" \
   --num_workers "${NUM_WORKERS}"
 
 echo "done $(date -Is)"
