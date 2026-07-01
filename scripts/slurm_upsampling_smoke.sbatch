@@ -17,7 +17,7 @@ PYTHON=$ENV_PREFIX/bin/python
 SMOKE_NAME=${MDGEN_SMOKE_NAME:-EHFR}
 SMOKE_FRAMES=${MDGEN_SMOKE_FRAMES:-20}
 SMOKE_DATA_DIR=${MDGEN_SMOKE_DATA_DIR:-data/4AA_data_implicit_smoke}
-OUT_DIR=${MDGEN_OUT_DIR:-outputs/upsampling_smoke}
+OUT_DIR=${MDGEN_OUT_DIR:-outputs/upsampling_smoke_direct}
 
 echo "start $(date -Is) host=$(hostname)"
 echo "name=${SMOKE_NAME} frames=${SMOKE_FRAMES} data_dir=${SMOKE_DATA_DIR} out_dir=${OUT_DIR}"
