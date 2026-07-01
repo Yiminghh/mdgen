@@ -3,7 +3,7 @@
 #SBATCH --partition=cpu
 #SBATCH --time=06:00:00
 #SBATCH --cpus-per-task=8
-#SBATCH --mem=64G
+#SBATCH --mem=56G
 #SBATCH --output=logs/analyze_forward_test100_%j.out
 #SBATCH --error=logs/analyze_forward_test100_%j.err
 
