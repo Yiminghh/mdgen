@@ -4,6 +4,14 @@ import os
 import mdtraj
 import numpy as np
 
+for _name, _value in {
+    'bool': np.bool_,
+    'int': int,
+    'float': float,
+}.items():
+    if _name not in np.__dict__:
+        setattr(np, _name, _value)
+
 if not hasattr(mdtraj, 'version'):
     class _MDTrajVersion:
         version = mdtraj.__version__
