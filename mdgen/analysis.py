@@ -10,6 +10,17 @@ if not hasattr(mdtraj, 'version'):
 
     mdtraj.version = _MDTrajVersion()
 
+_np_vstack = np.vstack
+
+
+def _compat_vstack(arrays, *args, **kwargs):
+    if not isinstance(arrays, (list, tuple)) and not hasattr(arrays, 'shape'):
+        arrays = list(arrays)
+    return _np_vstack(arrays, *args, **kwargs)
+
+
+np.vstack = _compat_vstack
+
 import pyemma
 from tqdm import tqdm
 
