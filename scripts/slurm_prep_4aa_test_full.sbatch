@@ -3,7 +3,7 @@
 #SBATCH --partition=cpu
 #SBATCH --time=06:00:00
 #SBATCH --cpus-per-task=8
-#SBATCH --mem=72G
+#SBATCH --mem=56G
 #SBATCH --output=logs/prep_4aa_test_full_%j.out
 #SBATCH --error=logs/prep_4aa_test_full_%j.err
 
